@@ -8,7 +8,7 @@ import uuid
 
 # --- 1. CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(
-    page_title="Diva | Nail Atelier",
+    page_title="Nails | by Diva",
     page_icon="💅",
     layout="wide"
 )
