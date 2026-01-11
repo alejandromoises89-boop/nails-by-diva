@@ -4,12 +4,12 @@ import datetime
 import json
 import os
 import base64
+import uuid
 import urllib.parse
-from streamlit.components.v1 import html
 
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(
-    page_title="Nails by Diva | Premium Booking",
+    page_title="Diva | Nail Atelier",
     page_icon="💅",
     layout="wide"
 )
@@ -18,92 +18,86 @@ st.set_page_config(
 DB_FILE = "nails_db.json"
 BUSINESS_PHONE = "595992698406"
 
-# Datos Estáticos
+# --- DATOS ESTÁTICOS (IMÁGENES ACTUALIZADAS) ---
 SERVICES = {
     "CAPPING": {
         "title": "💅 Capping Gel",
         "price": 120000,
-        "desc": "Recubrimiento de gel sobre la uña natural para mayor resistencia.",
-        "img": "https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&q=80&w=800"
+        "desc": "Recubrimiento de gel para máxima resistencia.",
+        "img": "https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=800&q=80"
     },
     "MAINTENANCE": {
         "title": "✨ Mantenimiento",
         "price": 80000,
-        "desc": "Relleno y corrección del servicio anterior.",
-        "img": "https://images.unsplash.com/photo-1522337374993-64bd22fde451?auto=format&fit=crop&q=80&w=800"
+        "desc": "Relleno y perfección de tu set actual.",
+        "img": "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=800&q=80"
     },
     "SEMIPERMANENT": {
         "title": "🎨 Semipermanente",
         "price": 70000,
-        "desc": "Esmaltado de larga duración con curado UV/LED.",
-        "img": "https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&q=80&w=800"
+        "desc": "Color impecable con brillo espejo.",
+        "img": "https://images.unsplash.com/photo-1522337374993-64bd22fde451?w=800&q=80"
     },
     "SOFT_GEL": {
         "title": "💎 Soft Gel",
         "price": 150000,
-        "desc": "Extensión completa con tips de gel.",
-        "img": "https://images.unsplash.com/photo-1519014816548-bf5fe059e98b?auto=format&fit=crop&q=80&w=800"
+        "desc": "Extensiones premium ultra ligeras.",
+        "img": "https://images.unsplash.com/photo-1519014816548-bf5fe059e98b?w=800&q=80"
     }
 }
 
-# --- ESTILOS CSS (Blanco y Negro Luxury) ---
+# --- ESTILOS CSS ---
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@700&family=Montserrat:wght@300;400;600&display=swap');
     
-    .stApp {
-        background-color: #FFFFFF; /* Fondo Blanco */
-        color: #1a1a1a;
-        font-family: 'Montserrat', sans-serif;
-    }
+    .stApp { background-color: #FFFFFF; color: #1a1a1a; font-family: 'Montserrat', sans-serif; }
+    h1, h2, h3 { font-family: 'Bodoni Moda', serif !important; color: #000000 !important; }
 
-    h1, h2, h3 {
-        font-family: 'Bodoni Moda', serif !important;
-        color: #000000 !important;
-        letter-spacing: -1px;
-    }
-
-    /* Tarjetas de Servicio Negras */
+    /* Tarjetas Negras */
     .service-card {
-        background-color: #000000; /* Fondo Negro */
-        border-radius: 0px;
+        background-color: #000000;
         padding: 25px;
-        transition: 0.3s;
-        margin-bottom: 10px;
         text-align: center;
+        min-height: 250px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border: 1px solid #111;
     }
-    .service-card h4 { color: #D4AF37 !important; margin-bottom: 5px; }
-    .service-card p { color: #888888 !important; font-size: 0.85rem; }
+    .service-card h4 { color: #D4AF37 !important; margin-top: 0; }
+    .service-card p { color: #888 !important; font-size: 0.85rem; }
 
-    /* Botones Dorados */
+    /* Botón Reservar */
     div.stButton > button {
         background-color: #D4AF37 !important;
         color: white !important;
-        border: none !important;
         border-radius: 0px !important;
         font-weight: 600;
+        letter-spacing: 2px;
         width: 100%;
-        padding: 12px;
+        border: none !important;
+        padding: 15px;
+    }
+    
+    /* Inputs */
+    input, select, textarea {
+        border-radius: 0px !important;
+        border: 1px solid #000 !important;
     }
 
-    /* Formulario */
-    [data-testid="stForm"] {
-        background-color: #f9f9f9;
-        border: 2px solid #000;
-        border-radius: 0px;
-        padding: 40px;
-    }
-
-    /* Ocultar elementos de Streamlit */
     #MainMenu, header, footer { visibility: hidden; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- FUNCIONES ---
+# --- CARGA DE DATOS ---
 def load_data():
     if not os.path.exists(DB_FILE):
         return {"appointments": [], "settings": {"qr_familiar": None, "qr_ueno": None}}
-    with open(DB_FILE, "r") as f: return json.load(f)
+    try:
+        with open(DB_FILE, "r") as f: return json.load(f)
+    except:
+        return {"appointments": [], "settings": {"qr_familiar": None, "qr_ueno": None}}
 
 def save_data(data):
     with open(DB_FILE, "w") as f: json.dump(data, f, indent=4)
@@ -111,56 +105,68 @@ def save_data(data):
 if 'data' not in st.session_state: st.session_state.data = load_data()
 if 'view' not in st.session_state: st.session_state.view = 'booking'
 
-# --- UI COMPONENTES ---
+# --- VISTA PRINCIPAL ---
 
 def header():
-    st.markdown("<div style='text-align:center; padding: 40px 0;'><h1 style='font-size:5rem;'>DIVA</h1><p style='letter-spacing:10px; color:#D4AF37;'>NAIL ATELIER</p></div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center; padding: 40px 0;'><h1 style='font-size:4.5rem; margin:0;'>DIVA</h1><p style='letter-spacing:10px; color:#D4AF37; margin-top:-10px;'>NAIL ATELIER</p></div>", unsafe_allow_html=True)
 
-def service_catalog():
+def show_catalog():
     cols = st.columns(len(SERVICES))
     for idx, (key, service) in enumerate(SERVICES.items()):
         with cols[idx]:
-            st.image(service['img'])
+            # Imagen con altura fija para uniformidad
+            st.markdown(f'<img src="{service["img"]}" style="width:100%; height:250px; object-fit:cover;">', unsafe_allow_html=True)
             st.markdown(f"""
             <div class="service-card">
                 <h4>{service['title']}</h4>
                 <p>{service['desc']}</p>
-                <h3 style="color:#D4AF37 !important;">₲ {service['price']:,}</h3>
+                <h3 style="color:#D4AF37 !important; margin:10px 0;">₲ {service['price']:,}</h3>
             </div>
             """, unsafe_allow_html=True)
-            if st.button("Reservar", key=f"btn_{key}"):
+            
+            # Al hacer clic, se guarda el servicio y se recarga la página con el ancla en la URL
+            if st.button(f"ELEGIR {key}", key=f"btn_{key}"):
                 st.session_state.pre_selected = service['title']
-                # Script para bajar al formulario
-                html("<script>window.parent.document.getElementById('booking_section').scrollIntoView({behavior: 'smooth'});</script>")
+                # Esta es la forma más efectiva de hacer scroll en Streamlit sin JS externo
+                st.markdown('<script>window.location.href="#formulario";</script>', unsafe_allow_html=True)
+                st.rerun()
 
-def booking_form():
-    st.markdown("<div id='booking_section'></div>", unsafe_allow_html=True)
-    st.markdown("<br><br><h2 style='text-align:center;'>RESERVAR TURNO</h2>", unsafe_allow_html=True)
+def booking_section():
+    st.markdown("<div id='formulario'></div>", unsafe_allow_html=True)
+    st.markdown("<br><br><br><h2 style='text-align:center;'>RESERVAR MI TURNO</h2>", unsafe_allow_html=True)
     
-    c1, c2, c3 = st.columns([1, 2, 1])
-    with c2:
-        with st.form("main_form"):
-            name = st.text_input("Nombre y Apellido")
-            phone = st.text_input("WhatsApp (ej: 0992...)")
+    _, center_col, _ = st.columns([1, 2, 1])
+    
+    with center_col:
+        with st.form("booking_form"):
+            name = st.text_input("Nombre Completo")
+            phone = st.text_input("WhatsApp (ej: 0992698406)")
             
-            col_a, col_b = st.columns(2)
-            date = col_a.date_input("Fecha", min_value=datetime.date.today())
+            c1, c2 = st.columns(2)
+            date = c1.date_input("Fecha", min_value=datetime.date.today())
             
-            service_options = [s['title'] for s in SERVICES.values()]
-            idx = 0
+            service_list = [s['title'] for s in SERVICES.values()]
+            default_idx = 0
             if 'pre_selected' in st.session_state:
-                idx = service_options.index(st.session_state.pre_selected)
+                if st.session_state.pre_selected in service_list:
+                    default_idx = service_list.index(st.session_state.pre_selected)
             
-            service = col_b.selectbox("Servicio", service_options, index=idx)
-            time = st.selectbox("Hora", [f"{h:02d}:{m}" for h in range(8, 20) for m in ["00", "30"]])
-            payment = st.selectbox("Método de Pago", ["Transferencia", "Pix", "Efectivo"])
+            selected_service = c2.selectbox("Servicio", service_list, index=default_idx)
             
-            if st.form_submit_button("CONFIRMAR MI LUGAR"):
+            time_slots = []
+            for h in range(8, 20):
+                time_slots.append(f"{h:02d}:00")
+                time_slots.append(f"{h:02d}:30")
+                
+            time = c1.selectbox("Horario", time_slots)
+            payment = c2.selectbox("Método de Pago", ["Transferencia", "Pix", "Efectivo"])
+            
+            if st.form_submit_button("AGENDAR AHORA"):
                 if name and phone:
                     res_id = str(uuid.uuid4())[:6].upper()
                     new_apt = {
                         "id": res_id, "client": name, "phone": phone,
-                        "date": str(date), "time": time, "service": service,
+                        "date": str(date), "time": time, "service": selected_service,
                         "payment": payment, "status": "PENDIENTE"
                     }
                     st.session_state.data['appointments'].append(new_apt)
@@ -168,49 +174,34 @@ def booking_form():
                     st.session_state.last_res = new_apt
                     st.session_state.view = 'success'
                     st.rerun()
+                else:
+                    st.error("Por favor completa tu nombre y teléfono.")
 
 def success_view():
     res = st.session_state.last_res
     st.markdown(f"""
-    <div style='text-align:center; background:#000; color:#fff; padding:50px; border-radius:0px;'>
-        <h1 style='color:#D4AF37 !important;'>¡RESERVA EXITOSA!</h1>
-        <p>Código: {res['id']}</p>
-        <hr style='border-color:#333'>
-        <h3>{res['service']} | {res['date']} | {res['time']} hs</h3>
+    <div style='text-align:center; background:#000; color:#fff; padding:60px; border:2px solid #D4AF37;'>
+        <h1 style='color:#D4AF37 !important; font-size:3rem;'>¡RESERVA RECIBIDA!</h1>
+        <p style='letter-spacing:3px;'>CÓDIGO DE SEGUIMIENTO: {res['id']}</p>
+        <hr style='border-color:#333; width:50%; margin: 20px auto;'>
+        <h3>{res['service']}</h3>
+        <p>{res['date']} a las {res['time']} hs</p>
     </div>
     """, unsafe_allow_html=True)
     
     if res['payment'] in ["Transferencia", "Pix"]:
-        st.markdown("<br><h2 style='text-align:center;'>REALIZAR PAGO</h2>", unsafe_allow_html=True)
+        st.markdown("<br><h2 style='text-align:center;'>DATOS DE PAGO</h2>", unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown("<div style='text-align:center; padding:20px; border:1px solid #ddd;'>", unsafe_allow_html=True)
+            st.markdown("<div style='text-align:center; border:1px solid #EEE; padding:20px;'>", unsafe_allow_html=True)
             st.subheader("Banco Familiar")
-            st.write("Cuenta: 815643114")
+            st.code("Cuenta: 815643114")
             qr_f = st.session_state.data['settings'].get('qr_familiar')
-            if qr_f: st.image(base64.b64decode(qr_f), width=250)
+            if qr_f: st.image(base64.b64decode(qr_f), width=280)
+            else: st.info("QR no disponible. Usa el número de cuenta.")
             st.markdown("</div>", unsafe_allow_html=True)
 
         with col2:
-            st.markdown("<div style='text-align:center; padding:20px; border:1px solid #ddd;'>", unsafe_allow_html=True)
+            st.markdown("<div style='text-align:center; border:1px solid #EEE; padding:20px;'>", unsafe_allow_html=True)
             st.subheader("Ueno Bank / Pix")
-            st.write("Alias: 4437206")
-            qr_u = st.session_state.data['settings'].get('qr_ueno')
-            if qr_u: st.image(base64.b64decode(qr_u), width=250)
-            st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("Volver al Inicio"):
-        st.session_state.view = 'booking'
-        st.rerun()
-
-# --- MAIN ---
-header()
-if st.session_state.view == 'booking':
-    service_catalog()
-    booking_form()
-else:
-    success_view()
-
-import uuid # Importante para generar IDs
