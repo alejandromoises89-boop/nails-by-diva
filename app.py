@@ -8,7 +8,7 @@ import uuid
 import urllib.parse
 
 # --- 1. CONFIGURACIÓN ---
-st.set_page_config(page_title="Night Speed Diva | Nail Atelier", page_icon="💅", layout="wide")
+st.set_page_config(page_title="Nails by Diva | Nail Atelier", page_icon="💅", layout="wide")
 
 DB_FILE = "nails_db.json"
 BUSINESS_PHONE = "595992698406"
@@ -107,11 +107,11 @@ def success_view():
             qr = st.session_state.data['settings'].get('qr_familiar')
             if qr: st.image(f"data:image/png;base64,{qr}")
         with c2:
-            st.markdown('<div class="bank-card"><b>UENO BANK / PIX</b><br>Alias: <b>4437206</b><br>Night Speed Diva</div>', unsafe_allow_html=True)
+            st.markdown('<div class="bank-card"><b>UENO BANK</b><br>Alias: <b>4437206</b><br>Nails by Diva</div>', unsafe_allow_html=True)
 
     # El mensaje se genera aquí pero no se muestra en el UI, solo se envía al hacer click
     msg_body = (
-        f"✨ *CONFIRMACIÓN - NIGHT SPEED DIVA*\n\n"
+        f"✨ *CONFIRMACIÓN - Nails by  Diva*\n\n"
         f"📍 *Cliente:* {res['client']}\n"
         f"💅 *Servicio:* {res['service']}\n"
         f"🗓 *Fecha:* {res['date']}\n"
