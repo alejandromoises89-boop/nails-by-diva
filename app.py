@@ -8,7 +8,7 @@ import uuid
 import urllib.parse
 
 # --- 1. CONFIGURACIÓN ---
-st.set_page_config(page_title="Diva | Nail Atelier", page_icon="💅", layout="wide")
+st.set_page_config(page_title="Nails | by  Diva", page_icon="💅", layout="wide")
 
 DB_FILE = "nails_db.json"
 BUSINESS_PHONE = "595992698406"
