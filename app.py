@@ -6,12 +6,13 @@ import uuid
 import datetime
 import urllib.parse
 
-# --- CONFIGURACIÓN DE PÁGINA ---
-st.set_page_config(page_title="Diva | Nail Atelier Premium", page_icon="💅", layout="centered")
+# --- 1. CONFIGURACIÓN Y CONSTANTES ESTÁTICAS (FUERA DE FUNCIONES) ---
+st.set_page_config(page_title="Nails | by Diva", page_icon="💅", layout="centered")
 
-# --- CONSTANTES DE DATOS (GENERACIÓN ESTÁTICA PARA EVITAR ERRORES) ---
-HORARIOS_LIST = [f"{h:02d}:{m:02d}" for h in range(8, 20) for m in ("00", "30")]
+# Generamos la lista de horarios una sola vez al cargar la app para evitar errores de ID
+HORARIOS_DISPONIBLES = [f"{h:02d}:{m:02d}" for h in range(8, 20) for m in ("00", "30")]
 
+# Catálogo de servicios con imágenes horizontales (ajustadas para cover)
 SERVICES = {
     "Capping Gel": {
         "price": 120000, 
@@ -25,7 +26,7 @@ SERVICES = {
     },
     "Semipermanente": {
         "price": 70000, 
-        "img": "https://images.unsplash.com/photo-1522337374993-64bd22fde451?w=1000&q=80", 
+        "img": "https://images.unsplash.com/photo-1519014816548-bf5fe059e98b?w=1000&q=80", 
         "desc": "Color impecable y brillo duradero."
     },
     "Soft Gel": {
@@ -38,17 +39,16 @@ SERVICES = {
 SERVICE_NAMES = list(SERVICES.keys())
 BUSINESS_PHONE = "595992698406"
 
-# --- PALETA DE COLORES ---
+# --- 2. PALETA DE COLORES "CHAMPAGNE & SLATE" ---
 COLORS = {
     "bg": "#FDFCFB",
     "text": "#2A2624",
     "accent": "#9E897F",
     "gold": "#C5A059",
-    "white": "#FFFFFF",
     "border": "#EAEAEA"
 }
 
-# --- ESTILOS CSS ---
+# --- 3. ESTILOS CSS ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=Montserrat:wght@200;400;600&display=swap');
@@ -60,23 +60,18 @@ st.markdown(f"""
     .logo-sub {{ font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.4rem; color: {COLORS['accent']}; margin-top: -10px; letter-spacing: 5px; }}
 
     .img-container {{
-        width: 100%;
-        height: 250px;
+        width: 100%; height: 250px;
         background-position: center;
-        background-size: cover;
+        background-size: cover; /* Evita bordes blancos */
         background-repeat: no-repeat;
-        display: flex;
-        align-items: flex-end;
-        position: relative;
-        margin-bottom: 10px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        display: flex; align-items: flex-end; position: relative;
+        margin-bottom: 12px;
         border: 1px solid {COLORS['border']};
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }}
     
     .img-overlay {{
-        position: absolute;
-        width: 100%;
-        height: 100%;
+        position: absolute; width: 100%; height: 100%;
         background: linear-gradient(0deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 50%);
     }}
     
@@ -87,38 +82,33 @@ st.markdown(f"""
         color: white !important;
         border-radius: 0px !important;
         border: none !important;
-        height: 45px;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        width: 100%;
-        font-size: 0.75rem;
+        height: 48px; letter-spacing: 2px;
+        text-transform: uppercase; width: 100%; font-size: 0.75rem;
     }}
     .stButton button:hover {{ background-color: {COLORS['accent']} !important; }}
 
-    .bank-card {{
-        background: white;
-        padding: 20px;
-        border: 1px solid #EEE;
+    .bank-info {{
+        background: white; padding: 20px;
+        border: 1px solid {COLORS['border']};
         border-top: 3px solid {COLORS['accent']};
-        text-align: center;
-        margin-bottom: 10px;
+        text-align: center; margin-bottom: 10px;
     }}
 
     #MainMenu, header, footer {{ visibility: hidden; }}
     </style>
 """, unsafe_allow_html=True)
 
-# --- MANEJO DE ESTADO ---
+# --- 4. MANEJO DE ESTADO ---
 if 'view' not in st.session_state: st.session_state.view = 'main'
 if 'selected_service' not in st.session_state: st.session_state.selected_service = SERVICE_NAMES[0]
 
 def format_gs(val): return f"₲ {val:,.0f}".replace(",", ".")
 
-# --- VISTA PRINCIPAL ---
+# --- 5. VISTA PRINCIPAL ---
 def view_main():
     st.markdown(f'<div class="header-box"><h1 class="logo-main">Diva</h1><div class="logo-sub">Nail Atelier</div></div>', unsafe_allow_html=True)
     
-    # Catálogo
+    # Catálogo Visual
     for name, info in SERVICES.items():
         st.markdown(f"""
             <div class="img-container" style="background-image: url('{info['img']}');">
@@ -138,7 +128,7 @@ def view_main():
     st.markdown("<div style='margin:50px 0;'></div>", unsafe_allow_html=True)
     
     # Formulario
-    with st.form("booking_form"):
+    with st.form("booking_form", clear_on_submit=False):
         st.markdown("<h3 style='text-align:center; font-family:Cormorant Garamond; font-size:2rem;'>Detalles de Reserva</h3>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         
@@ -146,11 +136,11 @@ def view_main():
         phone_in = c2.text_input("WhatsApp")
         
         date_in = c1.date_input("Fecha", min_value=datetime.date.today())
-        time_in = c2.selectbox("Hora disponible", options=HORARIOS_LIST)
+        time_in = c2.selectbox("Hora disponible", options=HORARIOS_DISPONIBLES)
         
-        # Selección del servicio
-        idx = SERVICE_NAMES.index(st.session_state.selected_service)
-        service_in = c1.selectbox("Servicio", options=SERVICE_NAMES, index=idx)
+        # Sincronización de servicio seleccionado
+        idx_default = SERVICE_NAMES.index(st.session_state.selected_service)
+        service_in = c1.selectbox("Servicio", options=SERVICE_NAMES, index=idx_default)
         
         pay_in = c2.selectbox("Método de Pago", ["Transferencia", "Pix", "Efectivo"])
         
@@ -166,15 +156,16 @@ def view_main():
                 st.session_state.view = 'confirm'
                 st.rerun()
             else:
-                st.error("Por favor completa tu nombre y contacto.")
+                st.error("Diva, necesitamos tu nombre y contacto para la reserva.")
 
+# --- 6. VISTA DE CONFIRMACIÓN ---
 def view_confirm():
     apt = st.session_state.current_apt
     st.markdown("<div class='header-box'><h1 class='logo-main'>Diva</h1></div>", unsafe_allow_html=True)
     
     st.markdown(f"""
         <div style="background:white; padding:30px; border:1px solid #EEE; text-align:center; margin-bottom:20px;">
-            <p style="letter-spacing:2px; color:{COLORS['accent']};">RESUMEN DE CITA</p>
+            <p style="letter-spacing:2px; color:{COLORS['accent']}; font-size:0.8rem;">RESERVACIÓN PENDIENTE</p>
             <h2 style="font-family:Cormorant Garamond; font-size:2.5rem; margin:10px 0;">{apt['service']}</h2>
             <p>{apt['date']} — {apt['time']} hs</p>
             <h3 style="color:{COLORS['text']}">{format_gs(apt['amount'])}</h3>
@@ -182,13 +173,13 @@ def view_confirm():
     """, unsafe_allow_html=True)
 
     if apt['payment'] in ["Transferencia", "Pix"]:
-        st.markdown("#### 💳 Datos para el pago")
+        st.markdown("#### 💳 Información de Pago")
         c1, c2 = st.columns(2)
         with c1:
-            st.markdown('<div class="bank-card"><small>FAMILIAR</small><br><b>815643114</b></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="bank-info"><small>FAMILIAR</small><br><b>815643114</b></div>', unsafe_allow_html=True)
         with c2:
-            st.markdown('<div class="bank-card"><small>UENO / PIX</small><br><b>Alias: 4437206</b></div>', unsafe_allow_html=True)
-        st.file_uploader("Adjuntar comprobante")
+            st.markdown(f'<div class="bank-info"><small>UENO / PIX</small><br><b>Alias: 4437206</b></div>', unsafe_allow_html=True)
+        st.file_uploader("Subir comprobante (opcional)")
 
     if st.button("CONFIRMAR Y ENVIAR WHATSAPP"):
         msg = (
@@ -205,11 +196,11 @@ def view_confirm():
         link = f"https://wa.me/{BUSINESS_PHONE}?text={urllib.parse.quote(msg)}"
         st.markdown(f'<meta http-equiv="refresh" content="0;URL={link}">', unsafe_allow_html=True)
 
-    if st.button("Corregir datos"):
+    if st.button("Volver a editar"):
         st.session_state.view = 'main'
         st.rerun()
 
-# --- NAVEGACIÓN PRINCIPAL ---
+# --- 7. LÓGICA DE NAVEGACIÓN ---
 if st.session_state.view == 'main':
     view_main()
 else:
