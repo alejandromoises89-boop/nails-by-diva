@@ -1,4 +1,4 @@
-import streamlit as st
+uimport streamlit as st
 import pandas as pd
 import datetime
 import json
@@ -50,7 +50,7 @@ SERVICES = {
         "title": "✨ Mantenimiento",
         "price": 80000,
         "desc": "Relleno y perfeccionamiento técnico.",
-        "img": "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=800&q=80"
+        "img": "https://i.ibb.co/bjf3G85q/images-1.jpg" # Link actualizado
     },
     "SEMIPERMANENT": {
         "title": "🎨 Semipermanente",
@@ -62,47 +62,29 @@ SERVICES = {
         "title": "💎 Soft Gel",
         "price": 150000,
         "desc": "Extensiones premium con tips de gel.",
-        "img": "https://images.unsplash.com/photo-1600057112019-2ea47271452a?w=800&q=80"
+        "img": "https://i.ibb.co/d07rD7xL/77c227-9403abc92b0d4b00a7c9fe128fe5a386-mv2-1.jpg" # Link actualizado
     }
 }
 
-# --- ESTILOS CSS ---
-st.markdown("""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@700&family=Montserrat:wght@300;400;600&display=swap');
-    .stApp { background-color: #FFFFFF; color: #1a1a1a; font-family: 'Montserrat', sans-serif; }
-    h1, h2, h3 { font-family: 'Bodoni Moda', serif !important; color: #000000 !important; text-transform: uppercase; }
-    .service-card { background-color: #000000; padding: 20px; text-align: center; border: 1px solid #111; margin-bottom: 10px; min-height: 180px; }
-    .service-card h4 { color: #D4AF37 !important; margin-bottom: 5px; font-weight: 600; }
-    .service-card p { color: #888 !important; font-size: 0.8rem; }
-    div.stButton > button {
-        background-color: #D4AF37 !important; color: white !important; border-radius: 0px !important;
-        border: none !important; font-weight: 600; letter-spacing: 2px; width: 100%; padding: 12px;
-    }
-    [data-testid="stForm"] { border: 1px solid #000 !important; padding: 30px !important; border-radius: 0px; }
-</style>
-""", unsafe_allow_html=True)
-
-# --- FUNCIONES DE INTERFAZ ---
-def header():
-    st.markdown("<div style='text-align:center; padding: 40px 0;'><h1 style='font-size:4rem; margin:0; letter-spacing:5px;'>DIVA</h1><p style='letter-spacing:10px; color:#D4AF37; margin-top:-10px;'>NAIL ATELIER</p></div>", unsafe_allow_html=True)
-
+# --- MEJORA EN LA FUNCIÓN DE VISUALIZACIÓN ---
 def show_catalog():
     cols = st.columns(len(SERVICES))
     for idx, (key, service) in enumerate(SERVICES.items()):
         with cols[idx]:
-            st.markdown(f'<img src="{service["img"]}" style="width:100%; height:250px; object-fit:cover; border-bottom: 3px solid #D4AF37;">', unsafe_allow_html=True)
+            # Usamos st.image en lugar de HTML puro para mayor compatibilidad con URLs externas
+            st.image(service["img"], use_container_width=True)
+            
             st.markdown(f"""
-            <div class="service-card">
+            <div class="service-card" style="border-top: 3px solid #D4AF37;">
                 <h4>{service['title']}</h4>
                 <p>{service['desc']}</p>
                 <h3 style="color:#D4AF37 !important;">₲ {service['price']:,}</h3>
             </div>
             """, unsafe_allow_html=True)
+            
             if st.button(f"SELECCIONAR", key=f"btn_{key}"):
                 st.session_state.pre_selected = service['title']
                 st.toast(f"Seleccionaste {service['title']}")
-
 def booking_section():
     st.markdown("<br><br><h2 style='text-align:center; letter-spacing:3px;'>RESERVAR CITA</h2>", unsafe_allow_html=True)
     _, center_col, _ = st.columns([1, 2, 1])
