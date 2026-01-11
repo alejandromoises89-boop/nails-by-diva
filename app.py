@@ -8,7 +8,7 @@ import uuid
 import urllib.parse
 
 # --- 1. CONFIGURACIÓN ---
-st.set_page_config(page_title="Nails | by  Diva", page_icon="💅", layout="wide")
+st.set_page_config(page_title="Nails by Diva | Nail Atelier", page_icon="💅", layout="wide")
 
 DB_FILE = "nails_db.json"
 BUSINESS_PHONE = "595992698406"
@@ -40,71 +40,20 @@ st.markdown("""
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital@1&display=swap');
     .stApp { background-color: #FAFAFA; color: #333; font-family: 'Inter', sans-serif; }
     .header-container { text-align: center; padding: 20px 0; }
-    .header-title { font-family: 'Playfair Display', serif; font-size: 3rem; letter-spacing: 8px; margin: 0; }
+    .header-title { font-family: 'Playfair Display', serif; font-size: 2.5rem; letter-spacing: 4px; margin: 0; text-transform: uppercase; }
     .header-subtitle { font-size: 0.7rem; letter-spacing: 10px; color: #D4AF37; text-transform: uppercase; }
     .mini-card { text-align: center; padding: 10px; background: white; border-radius: 12px; border: 1px solid #F0F0F0; }
     .service-price { font-family: 'Playfair Display', serif; font-style: italic; color: #D4AF37; font-size: 1.1rem; }
     .metric-box { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; border-bottom: 3px solid #D4AF37; }
+    .msg-preview { background: #f0f2f5; padding: 15px; border-radius: 10px; border-left: 5px solid #25D366; font-family: monospace; font-size: 0.9rem; }
     [data-testid="stHeader"], footer { visibility: hidden; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 4. PANEL ADMINISTRATIVO (NUEVO) ---
-def admin_dashboard():
-    with st.sidebar:
-        st.markdown("### 🔒 Diva Admin")
-        show_admin = st.checkbox("Abrir Panel de Control")
-    
-    if show_admin:
-        st.divider()
-        st.title("Panel de Gestión Financiera")
-        
-        # Métricas principales
-        apts = st.session_state.data.get('appointments', [])
-        exps = st.session_state.data.get('expenses', [])
-        
-        ingreso_total = sum(a['price'] for a in apts)
-        gastos_totales = sum(e['amount'] for e in exps)
-        # Suponiendo que 'pendiente' son los que no son 'Efectivo' o no confirmados
-        pendientes = sum(a['price'] for a in apts if a.get('status') == 'Pendiente')
-        
-        m1, m2, m3, m4 = st.columns(4)
-        m1.markdown(f'<div class="metric-box"><h6>Ingreso Bruto</h6><h3>₲ {ingreso_total:,}</h3></div>', unsafe_allow_html=True)
-        m2.markdown(f'<div class="metric-box"><h6>Pendiente Cobro</h6><h3>₲ {pendientes:,}</h3></div>', unsafe_allow_html=True)
-        m3.markdown(f'<div class="metric-box"><h6>Gastos</h6><h3>₲ {gastos_totales:,}</h3></div>', unsafe_allow_html=True)
-        m4.markdown(f'<div class="metric-box"><h6>Balance Neto</h6><h3>₲ {ingreso_total - gastos_totales:,}</h3></div>', unsafe_allow_html=True)
+# --- 4. FUNCIONES ---
 
-        # Sección Gastos y QRs
-        col_a, col_b = st.columns(2)
-        with col_a:
-            st.subheader("Registrar Gasto")
-            with st.form("expense_form"):
-                desc = st.text_input("Concepto (ej: Alquiler, Esmaltes)")
-                amt = st.number_input("Monto ₲", min_value=0, step=5000)
-                if st.form_submit_button("Guardar Gasto"):
-                    st.session_state.data['expenses'].append({"desc": desc, "amount": amt, "date": str(datetime.date.today())})
-                    save_data(st.session_state.data)
-                    st.rerun()
-
-        with col_b:
-            st.subheader("Actualizar QRs")
-            qr_f = st.file_uploader("Subir QR Familiar", type=['png', 'jpg'])
-            if qr_f:
-                st.session_state.data['settings']['qr_familiar'] = base64.b64encode(qr_f.read()).decode()
-                save_data(st.session_state.data)
-                st.success("QR Familiar actualizado")
-
-        st.subheader("Listado de Citas")
-        if apts:
-            df = pd.DataFrame(apts)
-            st.table(df[['id', 'client', 'service', 'price', 'payment']])
-        
-        if st.button("Cerrar Panel"): st.rerun()
-        st.divider()
-
-# --- 5. FUNCIONES DE CLIENTE ---
 def header():
-    st.markdown('<div class="header-container"><h1 class="header-title">DIVA</h1><p class="header-subtitle">Nail Atelier</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="header-container"><h1 class="header-title">NIGHT SPEED DIVA</h1><p class="header-subtitle">Nail Atelier</p></div>', unsafe_allow_html=True)
 
 def show_catalog():
     cols = st.columns(4)
@@ -122,8 +71,9 @@ def booking_section():
     with center_col:
         with st.form("booking_form"):
             name = st.text_input("Nombre Completo")
-            phone = st.text_input("WhatsApp")
+            phone = st.text_input("Tu número de WhatsApp")
             date = st.date_input("Fecha", min_value=datetime.date.today())
+            
             service_list = [s['title'] for s in SERVICES.values()]
             idx_p = service_list.index(st.session_state.pre_selected) if 'pre_selected' in st.session_state else 0
             selected_service = st.selectbox("Servicio", service_list, index=idx_p)
@@ -132,9 +82,15 @@ def booking_section():
             
             if st.form_submit_button("CONFIRMAR"):
                 if name and phone:
-                    # Marcamos como pendiente si no es efectivo
-                    status = "Pendiente" if payment != "Efectivo" else "Cobrado"
-                    res = {"id": str(uuid.uuid4())[:6].upper(), "client": name, "phone": phone, "service": selected_service, "price": price, "date": str(date), "payment": payment, "status": status}
+                    res = {
+                        "id": str(uuid.uuid4())[:6].upper(),
+                        "client": name,
+                        "phone": phone,
+                        "service": selected_service,
+                        "price": price,
+                        "date": str(date),
+                        "payment": payment
+                    }
                     st.session_state.data['appointments'].append(res)
                     save_data(st.session_state.data)
                     st.session_state.last_res = res
@@ -143,26 +99,54 @@ def booking_section():
 
 def success_view():
     res = st.session_state.last_res
-    st.markdown(f"<div style='text-align:center; padding:30px; background:white; border-radius:15px; border:1px solid #D4AF37;'><h2>¡REGISTRADO!</h2><p>{res['service']} - ₲ {res['price']:,}</p></div>", unsafe_allow_html=True)
     
+    # 1. Mensaje principal que se enviará
+    msg_body = (
+        f"✨ *NIGHT SPEED DIVA - CONFIRMACIÓN*\n\n"
+        f"📍 *Cliente:* {res['client']}\n"
+        f"💅 *Servicio:* {res['service']}\n"
+        f"🗓 *Fecha:* {res['date']}\n"
+        f"💰 *Monto:* ₲ {res['price']:,}\n"
+        f"💳 *Método:* {res['payment']}\n"
+        f"🆔 *Reserva ID:* {res['id']}\n\n"
+        f"Por favor, envíe el comprobante por este medio si seleccionó Transferencia/Pix."
+    )
+    
+    st.markdown(f"""
+    <div style='text-align:center; padding:30px; background:white; border-radius:15px; border:1px solid #D4AF37;'>
+        <h2 style='color:#D4AF37;'>¡RESERVA SOLICITADA!</h2>
+        <p>Gracias por elegir <b>Night Speed Diva</b>.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("### 📱 Mensaje a enviar por WhatsApp:")
+    st.markdown(f'<div class="msg-preview">{msg_body.replace("*", "").replace("\n", "<br>")}</div>', unsafe_allow_html=True)
+
     if res['payment'] in ["Transferencia", "Pix"]:
-        st.subheader("Datos de Pago")
+        st.subheader("🏦 Datos para el Pago")
         c1, c2 = st.columns(2)
         with c1:
             st.info("Banco Familiar: 815643114")
             qr = st.session_state.data['settings'].get('qr_familiar')
-            if qr: st.image(f"data:image/png;base64,{qr}")
+            if qr: st.image(f"data:image/png;base64,{qr}", caption="QR Familiar")
         with c2:
             st.info("Ueno / Pix: 4437206")
 
-    msg = f"Reserva Diva: {res['service']} - {res['client']} - ID: {res['id']}"
-    st.markdown(f'<a href="https://wa.me/{BUSINESS_PHONE}?text={urllib.parse.quote(msg)}" target="_blank"><div style="background:#25D366; color:white; padding:15px; border-radius:30px; text-align:center; font-weight:bold;">ENVIAR COMPROBANTE</div></a>', unsafe_allow_html=True)
-    if st.button("VOLVER"):
+    # Botón WhatsApp
+    url = f"https://wa.me/{BUSINESS_PHONE}?text={urllib.parse.quote(msg_body)}"
+    st.markdown(f"""
+        <a href="{url}" target="_blank" style="text-decoration:none;">
+            <div style="background:#25D366; color:white; padding:18px; border-radius:35px; text-align:center; font-weight:bold; font-size:1.1rem; margin-top:20px;">
+                🚀 ENVIAR CONFIRMACIÓN A WHATSAPP
+            </div>
+        </a>
+    """, unsafe_allow_html=True)
+
+    if st.button("⬅ VOLVER"):
         st.session_state.view = 'booking'
         st.rerun()
 
-# --- 6. FLUJO ---
-admin_dashboard()
+# --- 5. FLUJO ---
 header()
 if st.session_state.view == 'booking':
     show_catalog()
