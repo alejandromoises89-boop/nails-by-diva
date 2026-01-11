@@ -10,7 +10,8 @@ import urllib.parse
 st.set_page_config(page_title="Nails by Diva", page_icon="💅", layout="wide")
 
 DB_FILE = "nails_db.json"
-BUSINESS_PHONE = "595992698406"
+# NUEVO NÚMERO CORPORATIVO ACTUALIZADO
+BUSINESS_PHONE = "595991973589" 
 ADMIN_PIN = "2026" 
 
 def load_data():
@@ -34,119 +35,117 @@ SERVICES = {
     "SOFT_GEL": {"title": "Soft Gel", "price": 150000, "img": "https://i.ibb.co/d07rD7xL/77c227-9403abc92b0d4b00a7c9fe128fe5a386-mv2-1.jpg"}
 }
 
-# --- 3. ESTILOS CSS ---
+# --- 3. ESTILOS ---
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital@1&display=swap');
     .stApp { background-color: #FAFAFA; }
-    .header-title { font-family: 'Playfair Display', serif; font-size: 2.5rem; text-align: center; text-transform: uppercase; margin-bottom: 0; }
-    .ticket-box { background: white; padding: 25px; border-radius: 10px; border: 1px dashed #ccc; margin: 20px 0; }
-    .bank-info { background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #D4AF37; margin: 10px 0; font-size: 0.9rem; }
-    .stButton > button { border-radius: 25px !important; text-transform: uppercase; font-weight: bold; }
+    .header-title { font-family: serif; font-size: 2.5rem; text-align: center; color: #333; }
+    .bank-card { background: #fdfdfd; padding: 15px; border-radius: 10px; border: 1px solid #eee; border-left: 5px solid #D4AF37; }
+    .stButton > button { width: 100%; border-radius: 30px !important; height: 3em; font-weight: bold; }
     [data-testid="stHeader"], footer { visibility: hidden; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 4. LÓGICA DE CLIENTE ---
+# --- 4. INTERFAZ CLIENTE ---
 def booking_interface():
-    st.markdown('<div style="padding:20px 0;"><h1 class="header-title">NAILS BY DIVA</h1><p style="text-align:center; letter-spacing:8px; color:#D4AF37; font-size:0.7rem;">ESTÉTICA & DISEÑO</p></div>', unsafe_allow_html=True)
+    st.markdown('<h1 class="header-title">NAILS BY DIVA</h1>', unsafe_allow_html=True)
+    st.markdown('<p style="text-align:center; letter-spacing:5px; color:#D4AF37;">ATELIER</p>', unsafe_allow_html=True)
     
     # Catálogo
     cols = st.columns(4)
     for idx, (key, s) in enumerate(SERVICES.items()):
         with cols[idx]:
             st.image(s["img"], use_container_width=True)
-            st.markdown(f'<div style="text-align:center; font-size:0.75rem;"><b>{s["title"]}</b><br><span style="color:#D4AF37;">₲{s["price"]:,}</span></div>', unsafe_allow_html=True)
-            if st.button("Seleccionar", key=f"sel_{key}"):
+            if st.button(f"{s['title']}\n₲{s['price']:,}", key=f"s_{key}"):
                 st.session_state.pre_selected = s['title']
-                st.toast(f"Elegiste {s['title']}")
+                st.toast(f"Elegido: {s['title']}")
 
     st.divider()
 
     # Formulario
-    _, center_col, _ = st.columns([1, 1.4, 1])
-    with center_col:
-        with st.form("main_form"):
-            n = st.text_input("Tu Nombre")
-            p = st.text_input("WhatsApp")
-            d = st.date_input("Fecha", min_value=datetime.date.today())
+    _, center, _ = st.columns([1, 1.5, 1])
+    with center:
+        with st.form("form_booking"):
+            name = st.text_input("Nombre y Apellido")
+            phone = st.text_input("Tu WhatsApp")
+            date = st.date_input("Fecha de Cita", min_value=datetime.date.today())
             
-            s_list = [s['title'] for s in SERVICES.values()]
-            idx = s_list.index(st.session_state.pre_selected) if 'pre_selected' in st.session_state else 0
-            serv_escogido = st.selectbox("Servicio", s_list, index=idx)
-            metodo = st.radio("Método de Pago", ["Efectivo", "Transferencia / Pix"], horizontal=True)
+            s_titles = [s['title'] for s in SERVICES.values()]
+            def_idx = s_titles.index(st.session_state.pre_selected) if 'pre_selected' in st.session_state else 0
+            serv = st.selectbox("Servicio", s_titles, index=def_idx)
+            pay = st.radio("Método de Pago", ["Efectivo", "Transferencia / Pix"], horizontal=True)
             
-            if st.form_submit_button("CONTINUAR"):
-                if n and p:
+            if st.form_submit_button("REVISAR DATOS"):
+                if name and phone:
                     st.session_state.temp_res = {
                         "id": str(uuid.uuid4())[:6].upper(),
-                        "client": n, "phone": p, "service": serv_escogido,
-                        "price": next(s['price'] for s in SERVICES.values() if s['title'] == serv_escogido),
-                        "date": str(d), "payment": metodo, "status": "Pendiente"
+                        "client": name, "phone": phone, "service": serv,
+                        "price": next(s['price'] for s in SERVICES.values() if s['title'] == serv),
+                        "date": str(date), "payment": pay, "status": "Pendiente"
                     }
                     st.session_state.view = 'confirm'
                     st.rerun()
 
 def confirmation_view():
     res = st.session_state.temp_res
-    st.markdown("<h4 style='text-align:center;'>CONFIRMA TU PEDIDO</h4>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align:center;'>FINALIZAR RESERVA</h3>", unsafe_allow_html=True)
     
-    # Mostrar datos del banco SI es transferencia
+    pago_listo = True
+    
     if res['payment'] == "Transferencia / Pix":
+        pago_listo = False
         st.markdown(f"""
-        <div class="bank-info">
-            <b>🏦 DATOS DE PAGO:</b><br>
+        <div class="bank-card">
+            <b>🏦 DATOS PARA TRANSFERENCIA:</b><br>
             • Banco Familiar: 815643114<br>
-            • Ueno Alias: <b>4437206</b><br>
-            • Titular: Nails by Diva
+            • Ueno / Pix Alias: <b>4437206</b><br>
+            • Total: ₲ {res['price']:,}
         </div>
         """, unsafe_allow_html=True)
         
-        comp = st.file_uploader("SUBIR COMPROBANTE AQUÍ (Requerido)", type=['jpg', 'png', 'pdf'])
-        pago_listo = True if comp else False
+        archivo = st.file_uploader("Subir foto del comprobante", type=['jpg', 'png', 'jpeg'])
+        if archivo:
+            st.success("✅ Comprobante cargado.")
+            pago_listo = True
     else:
-        st.info("📍 Pago al finalizar el servicio en efectivo.")
-        pago_listo = True
+        st.info("💵 Se abona en el local el día de la cita.")
 
-    # Botón de WhatsApp Estilo PedidosYa
+    # MENSAJE ESTILO TICKET
+    msg = (
+        f"🛍️ *TICKET DE RESERVA - NAILS BY DIVA*\n"
+        f"----------------------------------\n"
+        f"🆔 *ID:* #{res['id']}\n"
+        f"👤 *Cliente:* {res['client']}\n"
+        f"💅 *Servicio:* {res['service']}\n"
+        f"📅 *Fecha:* {res['date']}\n"
+        f"💰 *Monto:* ₲ {res['price']:,}\n"
+        f"💳 *Pago:* {res['payment']}\n"
+        f"----------------------------------\n"
+        f"✅ *¡Reserva Confirmada!*"
+    )
+    
+    url_wa = f"https://wa.me/{BUSINESS_PHONE}?text={urllib.parse.quote(msg)}"
+
     if pago_listo:
-        # Formato de mensaje estilo Ticket
-        msg_ticket = (
-            f"🛍️ *ORDEN DE SERVICIO - NAILS BY DIVA*\n"
-            f"------------------------------------------\n"
-            f"🆔 *Pedido:* #{res['id']}\n"
-            f"👤 *Cliente:* {res['client']}\n"
-            f"💅 *Servicio:* {res['service']}\n"
-            f"📅 *Fecha:* {res['date']}\n"
-            f"------------------------------------------\n"
-            f"💰 *TOTAL A PAGAR:* ₲ {res['price']:,}\n"
-            f"💳 *PAGO:* {res['payment']}\n"
-            f"------------------------------------------\n"
-            f"✅ *¡Comprobante adjuntado!*" if res['payment'] != "Efectivo" else "💵 *Pago en el local*"
-        )
-        url = f"https://wa.me/{BUSINESS_PHONE}?text={urllib.parse.quote(msg_ticket)}"
-        
-        if st.button("✅ FINALIZAR Y ENVIAR WHATSAPP", type="primary"):
+        if st.button("🚀 FINALIZAR Y ENVIAR COMPROBANTE"):
             st.session_state.data['appointments'].append(res)
             save_data(st.session_state.data)
-            st.markdown(f'<meta http-equiv="refresh" content="0;URL={url}">', unsafe_allow_html=True)
+            # Redirección forzada
+            st.markdown(f'<a href="{url_wa}" target="_self" id="wa_link"></a><script>document.getElementById("wa_link").click();</script>', unsafe_allow_html=True)
+            st.write(f"Si no redirige automáticamente, [haz clic aquí]({url_wa})")
     else:
-        st.button("🚫 SUBE EL COMPROBANTE PARA FINALIZAR", disabled=True)
+        st.button("🚫 DEBES CARGAR EL COMPROBANTE", disabled=True)
 
-    if st.button("⬅ Volver"):
+    if st.button("« Volver"):
         st.session_state.view = 'booking'
         st.rerun()
 
 # --- 5. PANEL ADMIN ---
 def admin_footer():
-    st.markdown('<br><br><br><div style="text-align:center; opacity:0.1;">.</div>', unsafe_allow_html=True)
+    st.markdown('<div style="margin-top:100px; text-align:center; color:#eee;">.</div>', unsafe_allow_html=True)
     with st.expander("Admin"):
         if st.text_input("PIN", type="password") == ADMIN_PIN:
-            apts = st.session_state.data['appointments']
-            st.write(pd.DataFrame(apts))
-            if st.button("Limpiar todo (CUIDADO)"):
-                st.session_state.data['appointments'] = []
-                save_data(st.session_state.data); st.rerun()
+            st.dataframe(pd.DataFrame(st.session_state.data['appointments']))
 
 # --- FLUJO ---
 if st.session_state.view == 'booking':
