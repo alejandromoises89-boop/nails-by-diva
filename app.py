@@ -11,7 +11,7 @@ st.set_page_config(page_title="Nails by Diva", page_icon="💅", layout="wide")
 
 DB_FILE = "nails_db.json"
 BUSINESS_PHONE = "595992698406"
-ADMIN_PIN = "1234" 
+ADMIN_PIN = "2026" 
 
 def load_data():
     if not os.path.exists(DB_FILE):
