@@ -9,12 +9,41 @@ import urllib.parse
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Diva | Nail Atelier Premium", page_icon="💅", layout="centered")
 
-# --- PALETA DE COLORES "QUIET LUXURY" ---
+# --- CONSTANTES DE DATOS (GENERACIÓN ESTÁTICA PARA EVITAR ERRORES) ---
+HORARIOS_LIST = [f"{h:02d}:{m:02d}" for h in range(8, 20) for m in ("00", "30")]
+
+SERVICES = {
+    "Capping Gel": {
+        "price": 120000, 
+        "img": "https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=1000&q=80", 
+        "desc": "Protección para tus uñas naturales."
+    },
+    "Mantenimiento": {
+        "price": 80000, 
+        "img": "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=1000&q=80", 
+        "desc": "Retoque profesional de crecimiento."
+    },
+    "Semipermanente": {
+        "price": 70000, 
+        "img": "https://images.unsplash.com/photo-1522337374993-64bd22fde451?w=1000&q=80", 
+        "desc": "Color impecable y brillo duradero."
+    },
+    "Soft Gel": {
+        "price": 150000, 
+        "img": "https://images.unsplash.com/photo-1604902396830-aca29e19b067?w=1000&q=80", 
+        "desc": "Extensiones de alta gama ultra ligeras."
+    }
+}
+
+SERVICE_NAMES = list(SERVICES.keys())
+BUSINESS_PHONE = "595992698406"
+
+# --- PALETA DE COLORES ---
 COLORS = {
-    "bg": "#FDFCFB",        # Crema muy claro
-    "text": "#2A2624",      # Carbón suave
-    "accent": "#9E897F",    # Taupe / Moka
-    "gold": "#C5A059",      # Dorado mate
+    "bg": "#FDFCFB",
+    "text": "#2A2624",
+    "accent": "#9E897F",
+    "gold": "#C5A059",
     "white": "#FFFFFF",
     "border": "#EAEAEA"
 }
@@ -28,14 +57,13 @@ st.markdown(f"""
     
     .header-box {{ text-align: center; padding: 40px 0; }}
     .logo-main {{ font-family: 'Cormorant Garamond', serif; font-size: 4rem; letter-spacing: 12px; margin: 0; text-transform: uppercase; font-weight: 300; color: {COLORS['text']}; }}
-    .logo-sub {{ font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.4rem; color: {COLORS['accent']}; margin-top: -15px; letter-spacing: 5px; }}
+    .logo-sub {{ font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.4rem; color: {COLORS['accent']}; margin-top: -10px; letter-spacing: 5px; }}
 
-    /* IMAGEN HORIZONTAL PERFECTA */
     .img-container {{
         width: 100%;
         height: 250px;
         background-position: center;
-        background-size: cover; /* Cubre todo sin espacios blancos */
+        background-size: cover;
         background-repeat: no-repeat;
         display: flex;
         align-items: flex-end;
@@ -54,7 +82,6 @@ st.markdown(f"""
     
     .img-text {{ position: relative; z-index: 2; padding: 25px; color: white; width: 100%; }}
 
-    /* BOTONES */
     .stButton button {{
         background-color: {COLORS['text']} !important;
         color: white !important;
@@ -65,11 +92,9 @@ st.markdown(f"""
         text-transform: uppercase;
         width: 100%;
         font-size: 0.75rem;
-        transition: 0.3s ease;
     }}
     .stButton button:hover {{ background-color: {COLORS['accent']} !important; }}
 
-    /* PAGO CARDS */
     .bank-card {{
         background: white;
         padding: 20px;
@@ -83,42 +108,17 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- DATOS DE SERVICIOS ---
-SERVICES = {
-    "Capping Gel": {
-        "price": 120000, 
-        "img": "https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=1200&q=80", 
-        "desc": "Refuerzo para uñas naturales."
-    },
-    "Mantenimiento": {
-        "price": 80000, 
-        "img": "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=1200&q=80", 
-        "desc": "Renovación técnica de tu set."
-    },
-    "Semipermanente": {
-        "price": 70000, 
-        "img": "https://images.unsplash.com/photo-1522337374993-64bd22fde451?w=1200&q=80", # Imagen estética rosada
-        "desc": "Brillo extremo y color duradero."
-    },
-    "Soft Gel": {
-        "price": 150000, 
-        "img": "https://images.unsplash.com/photo-1604902396830-aca29e19b067?w=1200&q=80", 
-        "desc": "Extensiones premium ultra ligeras."
-    }
-}
-
-BUSINESS_PHONE = "595992698406"
+# --- MANEJO DE ESTADO ---
+if 'view' not in st.session_state: st.session_state.view = 'main'
+if 'selected_service' not in st.session_state: st.session_state.selected_service = SERVICE_NAMES[0]
 
 def format_gs(val): return f"₲ {val:,.0f}".replace(",", ".")
 
-# --- NAVEGACIÓN ---
-if 'view' not in st.session_state: st.session_state.view = 'main'
-if 'selected_service' not in st.session_state: st.session_state.selected_service = "Capping Gel"
-
+# --- VISTA PRINCIPAL ---
 def view_main():
     st.markdown(f'<div class="header-box"><h1 class="logo-main">Diva</h1><div class="logo-sub">Nail Atelier</div></div>', unsafe_allow_html=True)
     
-    # Catálogo Visual
+    # Catálogo
     for name, info in SERVICES.items():
         st.markdown(f"""
             <div class="img-container" style="background-image: url('{info['img']}');">
@@ -131,9 +131,9 @@ def view_main():
             </div>
         """, unsafe_allow_html=True)
         
-        if st.button(f"ELEGIR {name.upper()}", key=f"btn_{name}"):
+        if st.button(f"SELECCIONAR {name.upper()}", key=f"btn_{name}"):
             st.session_state.selected_service = name
-            st.toast(f"Seleccionado: {name}")
+            st.rerun()
 
     st.markdown("<div style='margin:50px 0;'></div>", unsafe_allow_html=True)
     
@@ -146,14 +146,11 @@ def view_main():
         phone_in = c2.text_input("WhatsApp")
         
         date_in = c1.date_input("Fecha", min_value=datetime.date.today())
+        time_in = c2.selectbox("Hora disponible", options=HORARIOS_LIST)
         
-        # Horarios (Arreglo del error de selectbox)
-        time_options = [f"{h:02d}:{m:02d}" for h in range(8, 20) for m in ("00", "30")]
-        time_in = c2.selectbox("Hora disponible", options=time_options)
-        
-        # Servicio (Selección automática)
-        svc_options = list(SERVICES.keys())
-        svc_in = c1.selectbox("Servicio", options=svc_options, index=svc_options.index(st.session_state.selected_service))
+        # Selección del servicio
+        idx = SERVICE_NAMES.index(st.session_state.selected_service)
+        service_in = c1.selectbox("Servicio", options=SERVICE_NAMES, index=idx)
         
         pay_in = c2.selectbox("Método de Pago", ["Transferencia", "Pix", "Efectivo"])
         
@@ -163,13 +160,13 @@ def view_main():
                     "id": str(uuid.uuid4())[:6].upper(),
                     "client": name_in, "phone": phone_in,
                     "date": str(date_in), "time": time_in,
-                    "service": svc_in, "payment": pay_in,
-                    "amount": SERVICES[svc_in]['price']
+                    "service": service_in, "payment": pay_in,
+                    "amount": SERVICES[service_in]['price']
                 }
                 st.session_state.view = 'confirm'
                 st.rerun()
             else:
-                st.error("Diva, por favor completa tu nombre y contacto.")
+                st.error("Por favor completa tu nombre y contacto.")
 
 def view_confirm():
     apt = st.session_state.current_apt
@@ -191,7 +188,7 @@ def view_confirm():
             st.markdown('<div class="bank-card"><small>FAMILIAR</small><br><b>815643114</b></div>', unsafe_allow_html=True)
         with c2:
             st.markdown('<div class="bank-card"><small>UENO / PIX</small><br><b>Alias: 4437206</b></div>', unsafe_allow_html=True)
-        st.file_uploader("Subir comprobante")
+        st.file_uploader("Adjuntar comprobante")
 
     if st.button("CONFIRMAR Y ENVIAR WHATSAPP"):
         msg = (
@@ -212,7 +209,7 @@ def view_confirm():
         st.session_state.view = 'main'
         st.rerun()
 
-# Lógica Principal
+# --- NAVEGACIÓN PRINCIPAL ---
 if st.session_state.view == 'main':
     view_main()
 else:
