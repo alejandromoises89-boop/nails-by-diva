@@ -11,7 +11,7 @@ st.set_page_config(page_title="Nails by Diva", page_icon="💅", layout="wide")
 
 DB_FILE = "nails_db.json"
 BUSINESS_PHONE = "595992698406"
-ADMIN_PIN = "1234"  # <--- CAMBIA TU PIN AQUÍ
+ADMIN_PIN = "2026"  # <--- CAMBIA TU PIN AQUÍ
 
 def load_data():
     if not os.path.exists(DB_FILE):
@@ -156,7 +156,7 @@ def mini_admin_panel():
                     if st.form_submit_button("Guardar Gasto"):
                         st.session_state.data['expenses'].append({"desc": d, "amount": m, "date": str(datetime.date.today())})
                         save_data(st.session_state.data); st.rerun()
-        elif pin != "2026":
+        elif pin != "":
             st.error("Acceso denegado")
 
 # --- 6. EJECUCIÓN ---
