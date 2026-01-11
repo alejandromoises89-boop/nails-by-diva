@@ -118,7 +118,7 @@ def success_view():
         with c1:
             st.markdown('<div class="bank-card"><b>BANCO FAMILIAR</b><br>Cta: 815643114<br>Nails by Diva</div>', unsafe_allow_html=True)
         with c2:
-            st.markdown('<div class="bank-card"><b>UENO BANK / PIX</b><br>Alias: <b>4437206</b><br>Nails by Diva</div>', unsafe_allow_html=True)
+            st.markdown('<div class="bank-card"><b>UENO BANK</b><br>Alias: <b>4437206</b><br>Nails by Diva</div>', unsafe_allow_html=True)
 
     # Generación de mensaje de WhatsApp (Oculto hasta enviar)
     msg_body = (
