@@ -112,7 +112,7 @@ def success_view():
     </div>
     """, unsafe_allow_html=True)
     
-    if res['payment'] == "Transferencia / Pix":
+    if res['payment'] == "Transferencia":
         st.markdown("<h4 style='margin-top:25px; text-align:center; font-size:1rem;'>DETALLES DE PAGO</h4>", unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         with c1:
