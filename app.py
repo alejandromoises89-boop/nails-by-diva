@@ -30,7 +30,7 @@ SERVICES = {
         "title": "✨ Mantenimiento",
         "price": 80000,
         "desc": "Relleno y perfeccionamiento técnico.",
-        "img": "https://i.ibb.co/Lz0p6wX/mantenimiento-nails.jpg" # Imagen de lima/manicura
+        "img": "https://i.ibb.co/bjf3G85q/images-1.jpg" # Imagen de lima/manicura
     },
     "SEMIPERMANENT": {
         "title": "🎨 Semipermanente",
@@ -42,7 +42,7 @@ SERVICES = {
         "title": "💎 Soft Gel",
         "price": 150000,
         "desc": "Extensiones premium con tips de gel.",
-        "img": "https://i.ibb.co/Vv6V1M8/softgel-nails.jpg" # Imagen de tips transparentes
+        "img": "https://ibb.co/5W26L2wn" # Imagen de tips transparentes
     }
 }
 
