@@ -53,7 +53,7 @@ st.markdown("""
 # --- 4. FUNCIONES ---
 
 def header():
-    st.markdown('<div class="header-container"><h1 class="header-title">NIGHT SPEED DIVA</h1><p class="header-subtitle">Nail Atelier</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="header-container"><h1 class="header-title">NAILS by DIVA</h1><p class="header-subtitle">Nail Atelier</p></div>', unsafe_allow_html=True)
 
 def show_catalog():
     cols = st.columns(4)
@@ -102,7 +102,7 @@ def success_view():
     
     # 1. Mensaje principal que se enviará
     msg_body = (
-        f"✨ *NIGHT SPEED DIVA - CONFIRMACIÓN*\n\n"
+        f"✨ *NAILS BY DIVA - CONFIRMACIÓN*\n\n"
         f"📍 *Cliente:* {res['client']}\n"
         f"💅 *Servicio:* {res['service']}\n"
         f"🗓 *Fecha:* {res['date']}\n"
