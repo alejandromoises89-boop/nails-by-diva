@@ -10,10 +10,10 @@ import urllib.parse
 st.set_page_config(page_title="Nails by Diva", page_icon="💅", layout="wide")
 
 DB_FILE = "nails_db.json"
+# NÚMERO CORPORATIVO ACTUALIZADO
 BUSINESS_PHONE = "595992698406" 
-ADMIN_PIN = "2026" 
+ADMIN_PIN = "1234" 
 
-# Horarios disponibles en el atelier
 TIME_SLOTS = ["08:00", "09:30", "11:00", "13:00", "14:30", "16:00", "17:30"]
 
 def load_data():
@@ -29,14 +29,7 @@ def save_data(data):
 if 'data' not in st.session_state: st.session_state.data = load_data()
 if 'view' not in st.session_state: st.session_state.view = 'booking'
 
-# --- 2. LÓGICA DE BLOQUEO DE HORARIOS ---
-def get_blocked_slots(selected_date):
-    # Un horario se bloquea si ya existe una cita "Concluida" o "Pendiente" para ese día y hora
-    date_str = str(selected_date)
-    return [a['time'] for a in st.session_state.data['appointments'] 
-            if a['date'] == date_str]
-
-# --- 3. SERVICIOS ---
+# --- 2. SERVICIOS ---
 SERVICES = {
     "CAPPING": {"title": "Capping Gel", "price": 120000, "img": "https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=400&q=80"},
     "MAINTENANCE": {"title": "Mantenimiento", "price": 80000, "img": "https://i.ibb.co/bjf3G85q/images-1.jpg"},
@@ -44,24 +37,25 @@ SERVICES = {
     "SOFT_GEL": {"title": "Soft Gel", "price": 150000, "img": "https://i.ibb.co/d07rD7xL/77c227-9403abc92b0d4b00a7c9fe128fe5a386-mv2-1.jpg"}
 }
 
-# --- 4. ESTILOS CSS ---
+# --- 3. ESTILOS CSS ---
 st.markdown("""
 <style>
     .stApp { background-color: #FAFAFA; }
     .header-title { font-family: serif; font-size: 2.5rem; text-align: center; color: #333; }
     .whatsapp-btn {
-        background-color: #25D366; color: white !important; padding: 15px 25px;
+        background-color: #25D366; color: white !important; padding: 18px 25px;
         border-radius: 50px; text-align: center; text-decoration: none;
         display: flex; align-items: center; justify-content: center;
-        font-weight: bold; margin: 20px auto; max-width: 300px;
+        font-weight: bold; font-size: 1.1rem; margin: 25px auto; max-width: 380px;
+        box-shadow: 0 4px 15px rgba(37,211,102,0.3);
     }
-    .whatsapp-icon { width: 22px; margin-right: 10px; }
+    .whatsapp-icon { width: 25px; margin-right: 12px; }
     .admin-footer { font-size: 0.4rem; color: #F0F0F0; text-align: center; margin-top: 150px; }
     [data-testid="stHeader"], footer { visibility: hidden; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 5. INTERFAZ CLIENTE ---
+# --- 4. INTERFAZ CLIENTE ---
 def booking_interface():
     st.markdown('<h1 class="header-title">NAILS BY DIVA</h1><p style="text-align:center; letter-spacing:8px; color:#D4AF37; font-size:0.7rem; margin-top:-10px;">ATELIER</p>', unsafe_allow_html=True)
     
@@ -77,22 +71,21 @@ def booking_interface():
     with center:
         with st.form("main_booking"):
             n = st.text_input("Nombre y Apellido")
-            p = st.text_input("WhatsApp")
+            p = st.text_input("Tu WhatsApp")
             d = st.date_input("Fecha", min_value=datetime.date.today())
             
-            # Filtrar horarios disponibles
-            blocked = get_blocked_slots(d)
-            available_slots = [s for s in TIME_SLOTS if s not in blocked]
-            
-            t = st.selectbox("Horario Disponible", available_slots if available_slots else ["Sin horarios disponibles"])
+            # Bloqueo de horarios
+            blocked = [a['time'] for a in st.session_state.data['appointments'] if a['date'] == str(d)]
+            avail = [s for s in TIME_SLOTS if s not in blocked]
+            t = st.selectbox("Horario Disponible", avail if avail else ["Sin turnos"])
             
             s_list = [s['title'] for s in SERVICES.values()]
             idx_s = s_list.index(st.session_state.pre_selected) if 'pre_selected' in st.session_state else 0
             serv = st.selectbox("Servicio", s_list, index=idx_s)
             pay = st.radio("Método de Pago", ["Efectivo", "Transferencia / Pix"], horizontal=True)
             
-            if st.form_submit_button("REVISAR DISPONIBILIDAD"):
-                if n and p and t != "Sin horarios disponibles":
+            if st.form_submit_button("REVISAR RESERVA"):
+                if n and p and t != "Sin turnos":
                     st.session_state.temp_res = {
                         "id": str(uuid.uuid4())[:6].upper(), "client": n, "phone": p, 
                         "service": serv, "price": next(s['price'] for s in SERVICES.values() if s['title'] == serv), 
@@ -102,44 +95,57 @@ def booking_interface():
 
 def confirmation_view():
     res = st.session_state.temp_res
-    st.markdown(f"<h3 style='text-align:center;'>Reserva para el {res['date']} a las {res['time']}</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='text-align:center;'>Reserva #{res['id']}</h3>", unsafe_allow_html=True)
     
     pago_ok = True
+    status_msg = "✅ Comprobante adjunto"
     if res['payment'] == "Transferencia / Pix":
         pago_ok = False
-        st.warning(f"Total: ₲{res['price']:,} | Familiar: 815643114 | Ueno: 4437206")
-        file = st.file_uploader("SUBIR COMPROBANTE", type=['jpg', 'png', 'jpeg'])
+        st.info(f"Familiar: 815643114 | Ueno: 4437206 | Total: ₲{res['price']:,}")
+        file = st.file_uploader("ADJUNTAR COMPROBANTE", type=['jpg', 'png', 'jpeg'])
         if file: pago_ok = True
+    else:
+        status_msg = "💵 Pago en Efectivo al finalizar"
+
+    # MENSAJE PERSONALIZADO PARA EL CORPORATIVO
+    msg = (
+        f"💅 *NUEVA CITA - NAILS BY DIVA*\n"
+        f"----------------------------------\n"
+        f"🆔 *ID:* #{res['id']}\n"
+        f"👤 *Cliente:* {res['client']}\n"
+        f"✨ *Servicio:* {res['service']}\n"
+        f"📅 *Fecha:* {res['date']}\n"
+        f"⏰ *Hora:* {res['time']}\n"
+        f"💰 *Monto:* ₲{res['price']:,}\n"
+        f"💳 *Pago:* {res['payment']}\n"
+        f"----------------------------------\n"
+        f"{status_msg}\n\n"
+        f"⚠️ *Favor confirmar recepción del turno.*"
+    )
+    
+    url_wa = f"https://wa.me/{BUSINESS_PHONE}?text={urllib.parse.quote(msg)}"
 
     if pago_ok:
-        msg = f"💅 *RESERVA NAILS BY DIVA*\n*ID:* #{res['id']}\n*Fecha:* {res['date']}\n*Hora:* {res['time']}\n*Servicio:* {res['service']}"
-        url_wa = f"https://wa.me/{BUSINESS_PHONE}?text={urllib.parse.quote(msg)}"
-        st.markdown(f'<a href="{url_wa}" target="_blank" class="whatsapp-btn"><img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="whatsapp-icon">ENVIAR Y BLOQUEAR HORARIO</a>', unsafe_allow_html=True)
-        if st.button("Finalizar"):
+        st.markdown(f"""
+            <a href="{url_wa}" target="_blank" class="whatsapp-btn">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="whatsapp-icon">
+                ENVIAR TURNO AL CORPORATIVO
+            </a>
+        """, unsafe_allow_html=True)
+        if st.button("Finalizar y Volver"):
             st.session_state.data['appointments'].append(res); save_data(st.session_state.data)
             st.session_state.view = 'booking'; st.rerun()
+    else:
+        st.error("Carga el comprobante para habilitar el botón de WhatsApp.")
 
-# --- 6. PANEL ADMIN ---
+# --- 5. PANEL ADMIN ---
 def admin_footer():
     st.markdown('<div class="admin-footer">.</div>', unsafe_allow_html=True)
     with st.expander("⚙️"):
         if st.text_input("PIN", type="password") == ADMIN_PIN:
             apts = st.session_state.data['appointments']
-            
-            # Métricas
-            in_r = sum(a['price'] for a in apts if a.get('status') == 'Concluido')
-            pend = sum(a['price'] for a in apts if a.get('status') == 'Pendiente')
-            st.metric("INGRESOS COBRADOS", f"₲{in_r:,}")
-            st.metric("PENDIENTE POR COBRAR", f"₲{pend:,}")
-
-            st.subheader("Citas de Hoy / Pendientes")
-            for i, a in enumerate(apts):
-                if a['status'] == 'Pendiente':
-                    col1, col2 = st.columns([3, 1])
-                    col1.write(f"📌 {a['date']} - {a['time']} | {a['client']} ({a['service']})")
-                    if col2.button(f"Cobrado ✅", key=f"f_{i}"):
-                        st.session_state.data['appointments'][i]['status'] = 'Concluido'
-                        save_data(st.session_state.data); st.rerun()
+            st.metric("TOTAL COBRADO", f"₲{sum(a['price'] for a in apts if a.get('status') == 'Concluido'):,}")
+            st.dataframe(pd.DataFrame(apts))
 
 if st.session_state.view == 'booking': booking_interface()
 else: confirmation_view()
