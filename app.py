@@ -6,7 +6,7 @@ import urllib.parse
 import plotly.express as px
 
 # --- 1. CONFIGURACIÓN ---
-st.set_page_config(page_title="Nails by Diva Admin", page_icon="💅", layout="wide")
+st.set_page_config(page_title="Nails by Diva", page_icon="💅", layout="wide")
 
 # --- 2. INICIALIZACIÓN DE DATOS ---
 if 'services' not in st.session_state:
